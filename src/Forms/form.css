@@ -159,6 +159,12 @@
 
 }
 
+.placeholder-color::placeholder {
+  color: white !important;
+  opacity: 1; /* Firefox */
+}
+
+
 .text-container {
   width: 250px; /* Set your desired width */
   border: 1px solid black; 
@@ -166,6 +172,22 @@
   overflow: auto; /* or hidden */ 
 }
 .pdf-container{
-  height: 700px;
+  height: 600px;
   width: 100%;
+  padding-bottom: 75px;
+}
+
+.file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.list-group-item {
+  word-break: break-word;
+}
+
+.list-group-item .btn {
+  align-self: flex-center;
 }

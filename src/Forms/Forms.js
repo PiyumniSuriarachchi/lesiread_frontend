@@ -14,6 +14,8 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import { ToastContainer, toast } from 'react-toastify';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
+import { pageNavigationPlugin, PageNavigationPluginOnPageChangeEvent } from '@react-pdf-viewer/page-navigation';
+
 
 
 
@@ -50,9 +52,17 @@ function PDFViewer(){
 
   const newplugin = defaultLayoutPlugin()
 
+
+  const pageNavigationPluginInstance = pageNavigationPlugin();
+  const { CurrentPageInput, GoToNextPage, GoToPreviousPage } = pageNavigationPluginInstance;
+
+  const handlePageChange = (e) => {
+    setHighestScrolledPage(Math.max(highestScrolledPage, e.currentPage));
+  };
+
   const onItemClick = ({ numPages }) => {
     pageRefs.current[numPages - 1].scrollIntoView({ behavior: 'smooth' });
-    console.log("badu weda")
+    console.log("working")
   };
 
   useEffect(() => {
@@ -153,12 +163,12 @@ function PDFViewer(){
     }
   }
 
-  const handlePageChange = (pageNumber) => {
+  {/*const handlePageChange = (pageNumber) => {
     const realpageNumber = pageNumber.currentPage;
     if (numPages > 0) { // Only update if numPages is valid
       setHighestScrolledPage(Math.max(highestScrolledPage, realpageNumber));
     }
-  };
+  };*/}
 
   useEffect(() => {
     if (viewPDF && numPages > 0) {
@@ -448,6 +458,12 @@ function PDFViewer(){
     setSelectedOption(e.target.value);
   };
 
+  useEffect(() => {
+    if (quizQuestions.length > 0) {
+      setCorrectAnswer(quizQuestions[2]);
+    }
+  }, [quizQuestions]);
+
   const handleNextQuestion = async () => {
     if (currentQuestionIndex < 10) {
       if (selectedOption === correctAnswer) {
@@ -553,9 +569,8 @@ function PDFViewer(){
                   <ListGroup>
                     {uploadedFiles ? ( // Check if uploadedFiles is defined and has items
                       uploadedFiles.map((file, index) => (
-                        <ListGroup.Item key={index}>
-                          {file.name}
-                          
+                        <ListGroup.Item key={index} className="d-flex flex-column align-items-center">
+                          <div className="w-100 text-truncate mb-2">{file.name}</div>
                           <Button variant="secondary" onClick={() => handleTogglepdfview(file)}>
                             View
                           </Button>
@@ -593,22 +608,71 @@ function PDFViewer(){
                 <div>{viewPDF && <p>Reading Time: {formatTime(elapsedTime)}</p>}</div>
             
               <div className='pdf-container' ref={pdfViewerRef}>
-                <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
-                    {viewPDF && <>
-                      <Viewer 
-                        fileUrl={pdfFile} 
-                        plugins={[newplugin]}
-                        onPageChange={handlePageChange}
-                        onDocumentLoadSuccess={({ numPages}) => {
-                          setHighestScrolledPage(1); // Reset for new document
-                        }}
-                        onPageClick={onItemClick}
-                        initialPage={highestScrolledPage}
-                      />
-                      
-                      </>}
+              <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
+                    {viewPDF && (
+                      <>
+                        
+                        <Viewer 
+                          fileUrl={pdfFile} 
+                          plugins={[pageNavigationPluginInstance]}
+                          onPageChange={handlePageChange}
+                          onDocumentLoadSuccess={({ numPages }) => {
+                            setHighestScrolledPage(1); // Reset for new document
+                          }}
+                          onPageClick={onItemClick}
+                          initialPage={highestScrolledPage}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems:'center', marginBottom: '1rem', marginTop:'20px'}}>
+                          <GoToPreviousPage>
+                            {(props) => (
+                              <button 
+                              onClick={props.onClick} 
+                              disabled={props.isDisabled} 
+                              className="custom-button next-button"
+                              style={{ 
+                                width: '150px' , 
+                                marginRight:'10px', 
+                                backgroundColor: props.isDisabled ? '#ccc' : '#007bff',
+                                borderRadius:'7px',
+                                color: 'white',
+                                cursor: props.isDisabled ? 'not-allowed' : 'pointer',
+                                padding: '8px 16px',
+                                margin: '0 5px',
+                                
+                              }}
+                              >
+                                Previous
+                              </button>
+                            )}
+                          </GoToPreviousPage>
+                          <CurrentPageInput />
+                          <GoToNextPage>
+                            {(props) => (
+                              <button  
+                              onClick={props.onClick} 
+                              disabled={props.isDisabled}
+                              className="custom-button next-button"
+                              style={{ 
+                                width: '150px' , 
+                                marginRight:'10px', 
+                                backgroundColor: props.isDisabled ? '#ccc' : '#007bff',
+                                borderRadius:'7px',
+                                color: 'white',
+                                cursor: props.isDisabled ? 'not-allowed' : 'pointer',
+                                padding: '8px 16px',
+                                margin: '0 5px',
+                                
+                              }}
+                              >
+                                Next
+                              </button>
+                            )}
+                          </GoToNextPage>
+                        </div>
+                      </>
+                    )}
                     {!viewPDF && <>No PDF</>}
-                </Worker>
+                  </Worker>
               </div>
             </Col>
             </Row>
@@ -751,7 +815,7 @@ function PDFViewer(){
             {showQAContainer && (
                     <Container className="quiz-container">
                       <Form.Group controlId="languageSelect">
-                        <Form.Label>Choose a language:</Form.Label>
+                        <h5>Choose a language:</h5>
                         <Form.Control className="language-select" as="select" value={selectedLanguageDropdown} onChange={handleLanguageChange}>
                           <option value="English">English</option>
                           <option value="Sinhala">Sinhala</option>
